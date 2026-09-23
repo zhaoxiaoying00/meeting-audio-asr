@@ -16,7 +16,7 @@ BG='#F4F3EF';CARD='#FFFFFF';INK='#202A27';MUTED='#59665F';GREEN='#22604B'
 class App:
     def __init__(self,root):
         self.root=root;self.state='idle';self.recorder=None;self.events=queue.Queue();self.folder=core.BASE
-        self.raw=None;self.failed_job=None;self.exiting=False;self.asr=None
+        self.raw=None;self.failed_job=None;self.exiting=False;self.asr=None;self.quiet_since={}
         try:self.saved=json.loads(SETTINGS.read_text(encoding='utf-8-sig'))
         except Exception:self.saved={}
         root.title('会议录音');root.geometry('750x680');root.minsize(690,660);root.configure(bg=BG)
@@ -166,6 +166,7 @@ class App:
     def start(self):
         try:
             self.refresh()
+            self.quiet_since={}
             enabled={'本地':self.local.get(),'远端':self.remote.get()}
             if not any(enabled.values()):raise ValueError('至少开启一路声音。')
             if shutil.disk_usage(core.BASE).free<1024**3:raise ValueError('D 盘可用空间不足 1 GB。')
@@ -249,8 +250,11 @@ class App:
             self.timer.configure(text=core.stamp(time.monotonic()-self.started))
             for source in self.boxes:
                 active=self.recorder.enabled.get(source,False);peak=self.recorder.levels.get(source,0) if active else 0
+                if active and peak<.001:self.quiet_since.setdefault(source,time.monotonic())
+                else:self.quiet_since.pop(source,None)
+                quiet=source in self.quiet_since and time.monotonic()-self.quiet_since[source]>10
                 self.meters[source]['value']=min(100,max(0,100+(20*np.log10(max(peak,1e-6)))/.6)) if active else 0
-                self.labels[source].configure(text='关闭' if not active else ('音量过高' if peak>.98 else '录制中'))
+                self.labels[source].configure(text='关闭' if not active else ('暂无声音' if quiet else ('音量过高' if peak>.98 else '录制中')))
             if self.recorder.error or shutil.disk_usage(core.BASE).free<250*1024**2:self.stop()
         self.root.after(150,self.tick)
 
