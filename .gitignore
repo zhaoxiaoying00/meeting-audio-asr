@@ -1,0 +1,24 @@
+# Local environments, models and application state
+.venv/
+__pycache__/
+*.py[cod]
+_app/models/
+_app/recordings/
+_app/python/
+_app/backups/
+_app/*.json
+_app/*.txt
+# Meeting output folders and media must never be versioned
+/20??-??-??/
+outputs/
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.mp4
+*.partial
+*.tmp
+.env
+.env.*
+*.log
+*.lnk

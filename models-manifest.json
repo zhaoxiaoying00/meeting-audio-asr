@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "path": "paraformer/model.int8.onnx",
+      "url": "https://huggingface.co/csukuangfj/sherpa-onnx-paraformer-zh-2024-03-09/resolve/906992d326ebf0c5171cde675aa0902be9e5bc6c/model.int8.onnx",
+      "sha256": "90bc03034ae1bef9575f8cc798cd1519c8be8aa9e8b458a033e32017ff4d584c"
+    },
+    {
+      "path": "paraformer/tokens.txt",
+      "url": "https://huggingface.co/csukuangfj/sherpa-onnx-paraformer-zh-2024-03-09/resolve/906992d326ebf0c5171cde675aa0902be9e5bc6c/tokens.txt",
+      "sha256": "6c0e3b35cece259829e6cb5b8d90d13db88f61ea3a2953d11898e4b2bfd7a2e2"
+    },
+    {
+      "path": "silero_vad.onnx",
+      "url": "https://raw.githubusercontent.com/snakers4/silero-vad/v4.0/files/silero_vad.onnx",
+      "sha256": "a35ebf52fd3ce5f1469b2a36158dba761bc47b973ea3382b3186ca15b1f5af28"
+    }
+  ]
+}

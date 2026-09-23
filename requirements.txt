@@ -1,0 +1,12 @@
+numpy==2.3.5
+scipy==1.18.1
+soundfile==0.14.0
+sherpa-onnx==1.13.8
+imageio-ffmpeg==0.6.0
+PyAudioWPatch==0.2.12.8
+pystray==0.19.5
+Pillow==12.3.0
+pywebrtc-audio==0.2.0
+pycaw==20260921
+comtypes==1.4.17
+psutil==7.2.2
