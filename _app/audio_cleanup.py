@@ -13,8 +13,12 @@ class AudioCleanup:
         self.raw=Path(raw);self.path=self.raw/'音频处理进度.json'
         self.state={'frames':0,'index':0};self.catalog={}
         if self.path.exists():self.state=json.loads(self.path.read_text(encoding='utf-8-sig'))
-        self.processor=AudioProcessor(sample_rate=16000,echo_cancellation=False,
-            noise_suppression=True,high_pass_filter=True,auto_gain_control=False,ns_level=0)
+        # Use the recorded computer audio as the far-end reference for WebRTC
+        # AEC3. The previous correlation-only subtraction was fragile when
+        # playback and microphone paths had different buffering/latency.
+        self.processor=AudioProcessor(sample_rate=16000,echo_cancellation=True,
+            noise_suppression=True,high_pass_filter=True,auto_gain_control=False,
+            ns_level=0,stream_delay_ms=128)
         self.warmed=False
 
     def scan(self):
@@ -79,17 +83,18 @@ class AudioCleanup:
             start=max(0,self.state['frames']-16000*8)
             if self.state['frames']>start:
                 n=self.state['frames']-start
-                self.processor.process(self.remove_echo(self.read(sources.get('本地'),start,n),self.read(sources.get('远端'),start,n)))
+                near=self.read(sources.get('本地'),start,n)
+                far=self.read(sources.get('远端'),start,n)
+                self.processor.process(near,far)
             self.warmed=True
         while available-self.state['frames']>=(1 if final else 16000*3+800):
             start=self.state['frames'];count=min(16000*3,available-start)
             local=self.read(sources.get('本地'),start,count)
             remote=self.read(sources.get('远端'),start,count)
-            context=max(0,start-16000)
-            near_context=self.read(sources.get('本地'),context,start-context+count)
-            far_context=self.read(sources.get('远端'),context,start-context+count)
-            echo_removed=self.remove_echo(near_context,far_context)[start-context:]
-            clean=self.processor.process(echo_removed)
+            # AEC3 is stateful; feed each chunk exactly once so its adaptive
+            # filter sees a continuous near/far stream without replaying an
+            # overlap from the previous chunk.
+            clean=self.processor.process(local,remote)
             # Disabled microphone spans remain exactly silent.
             for pos in range(0,len(local),160):
                 if not np.any(local[pos:pos+160]):clean[pos:pos+160]=0

@@ -178,7 +178,7 @@ class App:
             self.save();self.raw,self.folder=core.new_session(self.title.get());title=self.title.get()
             self.notes.attach(self.raw,self.folder,title)
             core.atomic(self.raw/'设备.json',json.dumps({s:self.boxes[s].get() for s,_ in devices},ensure_ascii=False))
-            core.atomic(self.raw/'audio_processing.json',json.dumps({'engine':'Reference linear echo reduction + WebRTC NS','version':2,'ns_level':0}))
+            core.atomic(self.raw/'audio_processing.json',json.dumps({'engine':'WebRTC AEC3 + WebRTC NS','version':3,'ns_level':0,'stream_delay_ms':128}))
             self.job=(self.raw,self.folder,title);self.controls('starting');self.status.set('正在打开录音设备…')
         except Exception as e:messagebox.showerror('无法开始',str(e));return
         def work():
