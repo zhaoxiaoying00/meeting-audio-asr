@@ -49,9 +49,29 @@ class BackgroundASR:
                 paraformer=str(core.MODELS/'paraformer'/'model.int8.onnx'),
                 tokens=str(core.MODELS/'paraformer'/'tokens.txt'),num_threads=2)
         gain=min(4.,.04/max(rms,1e-6)) if rms<.04 else 1.
-        stream=self.model.create_stream();stream.accept_waveform(16000,np.clip(a*gain,-1,1))
-        self.model.decode_stream(stream)
-        return stream.result.text.strip()
+        def decode_piece(piece):
+            stream=self.model.create_stream()
+            stream.accept_waveform(16000,np.clip(piece*gain,-1,1))
+            self.model.decode_stream(stream)
+            return stream.result.text.strip()
+        try:
+            return decode_piece(a)
+        except ValueError as exc:
+            # sherpa-onnx can reject an unusually long/noisy VAD span with
+            # "string too long". Decode bounded pieces so one bad span does
+            # not abort recovery for the whole meeting.
+            if 'string too long' not in str(exc).lower():
+                raise
+            pieces=[]
+            step=16000*2
+            for start in range(0,len(a),step):
+                piece=a[start:start+step]
+                try:
+                    text=decode_piece(piece)
+                except ValueError:
+                    text='【片段过长或异常，未可靠转写】'
+                if text:pieces.append(text)
+            return ' '.join(pieces)
 
     def step(self,final=False):
         if self.state['final']:return False
